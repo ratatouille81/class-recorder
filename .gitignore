@@ -1,0 +1,31 @@
+# Entornos virtuales
+venv-ingest/
+.venv/
+env/
+venv/
+
+# Credenciales y configuración privada
+.env
+.env.*
+
+# Python Cache y temporales
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Logs del sistema
+*.log
+watcher.log
+procesados.log
+
+# Archivos de video y datos temporales
+*.mp4
+*.mkv
+*.avi
+*.wav
+*.mp3
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
