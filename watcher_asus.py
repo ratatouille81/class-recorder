@@ -59,15 +59,20 @@ def wait_for_file_stability(file_path, wait_seconds=3, timeout=600):
 
 def procesar_video_v16(path):
     print(f"🎬 Ingesta Mentor v16: {os.path.basename(path)}")
-    subject_name = os.path.relpath(os.path.dirname(path), WATCH_DIR).replace(os.sep, "_")
-    master_file_path = os.path.join(WATCH_DIR, f"Master_{subject_name}.md")
+    # Detectamos la carpeta actual del video
+    video_dir = os.path.dirname(path)
+    subject_name = os.path.relpath(video_dir, WATCH_DIR).replace(os.sep, "_")
+    if subject_name == ".": subject_name = "General"
+    
+    # El archivo se guarda DENTRO de la carpeta donde está el video
+    master_file_path = os.path.join(video_dir, f"Master_{subject_name}.md")
 
     try:
-        # Usamos initial_prompt para corregir errores fonéticos comunes de la transcripción (Cujis -> QGIS)
+        # Contexto dinámico para Whisper basado en el nombre de la carpeta
         segments, info = whisper_model.transcribe(
             path, 
             language=None, 
-            initial_prompt="QGIS, datos geoespaciales, Shapefile, geodatos, cartografía, mapas, Marariza Sentis."
+            initial_prompt=f"Esta es una clase sobre {subject_name}. Términos técnicos relacionados con {subject_name}."
         )
         audio_text = " ".join([segment.text for segment in segments])
         
@@ -75,35 +80,34 @@ def procesar_video_v16(path):
         visual_context = "\n".join([f"- Captura {i+1}: {ask_vision(img)}" for i, img in enumerate(frames)])
 
         final_prompt = f"""[SYSTEM] 
-        Eres el 'M101 Incremental Mentor'. Tu misión es crear una guía de estudio estructurada basada en la clase.
+        Eres el 'M101 Incremental Mentor'. Tu misión es crear una guía de estudio técnica.
+        CONTEXTO DE LA MATERIA: {subject_name}
         
-        [REGLAS DE ORO]
-        - Genera un título descriptivo y real para la clase en base al audio (reemplazando "[TÍTULO]" con un título de verdad, ej. "### Introducción a los Datos Geoespaciales").
-        - NUNCA escribas el texto literal "[TÍTULO]" o "### [TÍTULO]".
-        - Fidelidad: Corrige cualquier error fonético del audio (ej: cambia "Cujis" por "QGIS").
-        - Expansión: Explica 2 conceptos técnicos relacionados de nivel profesional.
-        - Reto Evolutivo: Crea UN ejercicio práctico realista para hoy acorde al nivel de la sesión.
-        - Glosario Visual: Haz un glosario breve basado en lo detectado en pantalla.
-        - Tono: Motivador, técnico y muy profesional.
+        [REGLAS CRÍTICAS]
+        - Céntrate exclusivamente en los temas hablados en el audio y vistos en pantalla.
+        - Usa el nombre de la materia '{subject_name}' para guiar el tono técnico.
+        - PROHIBIDO inventar contextos de otras materias (ej. no hables de mapas si la materia es programación).
+        - Genera un título descriptivo real basado en el contenido.
+        - Fidelidad total al audio procesado.
         
         [DATOS DE ENTRADA]
         AUDIO DE LA CLASE: {audio_text}
         VISIÓN DE PANTALLA: {visual_context}
         
-        [FORMATO DE SALIDA DEBES SEGUIR ESTA ESTRUCTURA EXACTA]
-        ### [Escribe aquí el título real y descriptivo de la sesión]
+        [ESTRUCTURA DE SALIDA]
+        ### [Título descriptivo]
 
         **Lo aprendido hoy:**
-        (Resumen preciso y fiel de la clase de forma detallada y estructurada)
+        (Resumen detallado de la clase)
 
-        **Para profundizar (Nivel Pro):**
-        (Explicación de 2 conceptos técnicos relacionados)
+        **Conceptos Clave (Nivel Pro):**
+        (Explicación técnica de 2 funciones avanzadas)
 
         **Práctica M101 (Reto del día):**
-        (Un ejercicio práctico realizable hoy mismo)
+        (Un ejercicio práctico relacionado)
 
-        **Glosario Visual:**
-        (Definiciones breves de términos clave detectados en pantalla)
+        **Glosario Técnico:**
+        (Definiciones de términos detectados)
         """
 
         res = requests.post(OLLAMA_URL, json={"model": MODEL_LLM, "prompt": final_prompt, "stream": False})
@@ -126,7 +130,6 @@ if __name__ == "__main__":
             with open(LOG_FILE, "r") as f: procesados = f.read().splitlines()
         else: procesados = []
         for root, dirs, files in os.walk(WATCH_DIR):
-            if root == WATCH_DIR: continue
             for file in files:
                 if file.endswith((".mkv", ".mp4")):
                     full_path = os.path.join(root, file)
