@@ -1,14 +1,14 @@
 # CLAUDE_MASTER.md — Estándar Operativo de M101
 
 > **Documento canónico.** Define el comportamiento de Claude (el agente) en **todos** los proyectos de M101.
-> Se auto-carga globalmente desde `~/.claude/CLAUDE.md`. Cada proyecto puede importarlo también con `@CLAUDE_MASTER.md`.
+> Este documento es referenciado desde `~/.claude/CLAUDE.md` (rol Product Owner), que indica cuándo cargarlo — no se auto-importa, para mantener el presupuesto de contexto always-on bajo. Cada proyecto puede importarlo también con `@CLAUDE_MASTER.md`.
 
 | Campo | Valor |
 |---|---|
 | **Owner** | Lead Product Architect, M101 |
 | **Autoridad jerárquica** | Reporta directamente al **CEO** |
 | **Ámbito** | Software factory B2B — venues de alta densidad (stadiums, arenas, festivals, transit hubs, expo centers) |
-| **Versión** | 1.1.0 |
+| **Versión** | 1.4.1 |
 | **Estado** | Vigente |
 | **Modelo operativo** | `human-in-the-loop`, estricto |
 
@@ -74,54 +74,13 @@ Mi comportamiento **muta** según la fase del proyecto. Declaro siempre en qué 
 
 ## 3. Stack Técnico y Convenciones
 
-> **Prohibido el código genérico.** Cada línea debe reflejar el dominio de **venues de alta densidad** y asumir **alta concurrencia** + **telemetría IoT** como ciudadanos de primera clase. No se aceptan boilerplate sin propósito, abstracciones prematuras, ni soluciones copiadas que ignoren el perfil de carga.
+Las convenciones técnicas completas (Python, FastAPI, Next.js, PostgreSQL,
+Docker, alta concurrencia, telemetría IoT) viven en el skill **`m101-stack`**
+— carga bajo demanda, no always-on.
 
-### 3.1 Python
-- **Python 3.12+**. `type hints` **obligatorios**; `mypy --strict` en CI.
-- `async`/`await` por defecto. **Prohibido** blocking I/O dentro del event loop.
-- **Pydantic v2** para validación y contratos de datos. Nada de `dict` crudos cruzando fronteras de módulo.
-- Formato y lint con **`ruff`** (+ `black`). Prohibido `print` para logs (usar structured logging) y `except:` desnudo.
-- Arquitectura **domain-driven**: módulos por dominio del venue (`access`, `occupancy`, `telemetry`, `devices`). **Prohibido** el cajón de sastre `utils/`.
-- Dependencias con lockfile (`uv` o `poetry`), reproducibles.
-
-### 3.2 FastAPI
-- `APIRouter` por dominio. **Dependency Injection** para DB sessions, auth y config.
-- Endpoints `async`. Request/response **siempre** tipados con Pydantic models.
-- **API versioning** (`/v1/...`) y OpenAPI documentado y veraz.
-- Trabajo pesado fuera del request path: **background workers / task queues** (no bloquear el handler).
-- Obligatorio para alta densidad: **rate limiting**, **backpressure**, **idempotencia** en escrituras, y endpoints `GET /health` + `GET /ready`.
-
-### 3.3 Next.js 14
-- **App Router** exclusivamente (no Pages Router). **TypeScript strict**.
-- **Server Components** por defecto; `"use client"` solo cuando sea estrictamente necesario.
-- Mutaciones vía **Server Actions**; data fetching en el server con **streaming/Suspense**.
-- **Prohibido** `useEffect` para data fetching que pueda resolverse server-side.
-- Estado de servidor cacheado y revalidado de forma explícita; UI preparada para datos en tiempo real (occupancy, device health).
-
-### 3.4 PostgreSQL
-- **Migraciones versionadas** (Alembic). Nada de cambios de schema a mano.
-- **Prohibido** SQL sin parametrizar (riesgo de injection). Constraints reales **en la DB**, no solo en la app.
-- **Connection pooling** obligatorio (`asyncpg` pool / `pgbouncer`) — crítico bajo concurrencia.
-- Telemetría IoT = datos **time-series**: particionamiento por tiempo e índices explícitos para hot queries. Evaluar **TimescaleDB** para ingesta de devices.
-- Transacciones explícitas y conscientes de niveles de aislamiento.
-
-### 3.5 Docker
-- **Multi-stage builds**; imágenes mínimas (`slim`/`distroless`). Proceso por contenedor.
-- Ejecución como **non-root user**. `HEALTHCHECK` definido. `.dockerignore` presente.
-- **Prohibido** hornear secrets en la imagen (usar env / secrets manager).
-- `docker compose` define el entorno **aislado** local que usa la Fase Desarrollo (2.2).
-
-### 3.6 Alta concurrencia (no negociable)
-- Diseño `async` end-to-end; **connection pooling** en todas las capas.
-- **Backpressure**, **rate limiting**, **circuit breakers** e **idempotencia** en escrituras.
-- **Caching** (Redis) en hot paths; invalidación explícita.
-- **Load testing obligatorio** (`k6`/`locust`) simulando picos reales de venue antes de declarar listo.
-
-### 3.7 Telemetría IoT empresarial (no negociable)
-- **Structured logging** (JSON) con **correlation IDs** end-to-end.
-- **OpenTelemetry**: traces + metrics + logs. Métricas en **Prometheus**, dashboards y alerting.
-- Ingesta de devices con protocolo apropiado (p. ej. **MQTT**), con **buffering** y **dead-letter** para no perder eventos bajo pico.
-- Métricas **propias del dominio** (occupancy, device health, latencia de ingesta, tasa de eventos), no telemetría genérica de plantilla.
+> **Gate:** invocar `m101-stack` **antes** de escribir o revisar código en un
+> proyecto M101 con el stack default. Los repos con stack propio declarado en
+> su `CLAUDE.md` se rigen por ese, pero §1, §2 y §4 aplican igual.
 
 ---
 
@@ -147,20 +106,29 @@ Este documento (CLAUDE_MASTER) es la **constitución**. Los skills son roles esp
 
 ### 5.2 Skills activos y su rol
 
-**Squad de roles especializados** — complementan al Lead Product Architect en áreas fuera del scope técnico core:
+**Squad de 12 roles especializados** — instalados a nivel usuario en
+`~/.claude/skills/`, descubribles y de carga bajo demanda (migrados desde
+`m101-Close-wallet/.agent/skills/`, que los importaba como always-on — ver
+changelog 1.3.0). Complementan al Lead Product Architect en áreas fuera y
+dentro del scope técnico core:
 
 | Skill | Rol | Fase del Canonical Flow |
 |-------|-----|-------------------------|
+| `ag-backend-architect` | Arquitectura y build de backend (APIs, ledger, integraciones PSP) | Desarrollo §2.2 |
+| `ag-frontend-architect` | Arquitectura y build de frontend (app consumidor, admin console) | Desarrollo §2.2 |
+| `ag-data-engineer` | Schema de datos, migraciones, pooling, capas de almacenamiento | Desarrollo §2.2 |
+| `ag-qa-automator` | Tests, protocolo 3+1, invariantes financieros, Quality Gate | QA/Ops §2.3 |
+| `ag-devops-engineer` | Infraestructura, CI/CD, secrets, deploys zero-downtime | QA/Ops §2.3 |
+| `ag-tech-lead` | Puente negocio↔agentes; traduce intención a prompts técnicos para Antigravity | Transversal |
+| `ag-zero-pilot` | Orquestador central del squad; ejecuta el canonical flow completo | Transversal |
 | `ag-brand-strategist` | Estrategia de marca M101/C101 | Discovery / Go-to-market |
 | `ag-copywriter` | Copy y contenido M101/C101 | Go-to-market |
-| `ag-doc-librarian` | Memoria institucional y documentación | Transversal |
 | `ag-git-specialist` | Git, branching, source control | Desarrollo §2.2 |
 | `ag-growth-marketer` | Growth marketing M101/C101 | Go-to-market |
-| `ag-ux-ui-strategist` | Estrategia UX/UI | Discovery / Desarrollo |
-| `ag-secops-auditor` | Auditoría de seguridad (8 capas, cubre §3 completo) | QA/Ops §2.3 — FASE 4 |
+| `ag-secops-auditor` | Auditoría de seguridad (7 capas, cubre §3 completo) | QA/Ops §2.3 — FASE 4 |
 
 **Roles que NO tienen skill propio** porque están cubiertos por este documento:
-- Orquestación y liderazgo técnico → Lead Product Architect (§0, §1, §2)
+- Orquestación y liderazgo técnico de más alto nivel → Lead Product Architect (§0, §1, §2)
 - PRDs y especificaciones → Fase Discovery (§2.1)
 - Planificación de producto → Fase Discovery (§2.1)
 
@@ -176,7 +144,7 @@ El skill `ag-secops-auditor` es el ejecutor operativo de los estándares de segu
 - [ ] **Discovery** → PRD en Markdown aprobado antes de codificar (§2.1).
 - [ ] **Desarrollo** → contenedores aislados + branch, sin commit/push no solicitado (§2.2).
 - [ ] **QA/Ops** → tests verdes + load test + reporte fiel antes de "listo" (§2.3).
-- [ ] **Código** → específico del dominio, alta concurrencia + telemetría IoT, cero genérico (§3).
+- [ ] **Código** → específico del dominio, alta concurrencia + telemetría IoT, cero genérico (§3 → invocar skill `m101-stack`).
 - [ ] **Seguridad** → `ag-secops-auditor` ejecutado en FASE 4, veredicto PASSED antes de deploy (§5.3).
 - [ ] **Cambio sobre repo existente** → `codebase-memory-mcp` activo e indexado, o **bloqueo** (§4).
 
@@ -188,5 +156,8 @@ El skill `ag-secops-auditor` es el ejecutor operativo de los estándares de segu
 |---------|-------|---------|
 | 1.0.0 | 2026-06 | Versión inicial |
 | 1.1.0 | 2026-06-24 | Auto-carga global desde `~/.claude/CLAUDE.md`. §4.3 actualizado (MCP activo, sin requiere reinicio). §5 nuevo: ecosistema de skills, squad M101, roles removidos por solapamiento, ag-secops-auditor como gate de seguridad. Gate de seguridad añadido a Apéndice A. |
+| 1.3.0 | 2026-08-24 | §3 extraída al skill `m101-stack` (carga bajo demanda). Reduce el costo always-on del estándar de 192 a ~120 líneas sin perder ninguna regla. Gate de invocación añadido en §3 y Apéndice A. |
+| 1.4.0 | 2026-08-24 | §5.2 corregida: la tabla declaraba 7 skills, 2 de ellos inexistentes (`ag-doc-librarian`, `ag-ux-ui-strategist`). Migrados los 12 skills `ag-*` reales desde `m101-Close-wallet/.agent/skills/` a `~/.claude/skills/` (ruta estándar, descubribles, carga bajo demanda). Tabla ahora lista los 12: se agregan `ag-backend-architect`, `ag-frontend-architect`, `ag-data-engineer`, `ag-qa-automator`, `ag-devops-engineer`, `ag-tech-lead`, `ag-zero-pilot`. Always-on de `m101-Close-wallet`: 3108 → <300 líneas (se eliminaron los 5 `@imports` de skills en su `CLAUDE.md`). |
+| 1.4.1 | 2026-08-24 | Corrección de cabecera: se declaraba auto-carga inexistente desde `~/.claude/CLAUDE.md` (Task 1 decidió que ese archivo solo referencia este documento, no lo importa). Apéndice A actualizado para nombrar el skill `m101-stack` en el gate de código. |
 
 *Fin del estándar. Cambios a este documento requieren aprobación del CEO y bump de versión.*
