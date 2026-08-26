@@ -1,35 +1,24 @@
-# 🎙️ M101 Class Recorder & Ingestor
+# 🎙️ M101 Class Recorder & Ingestor (PURE CLOUD v18)
 
-Un sistema avanzado y modular de ingesta, transcripción y resumen técnico de clases universitarias y reuniones de estudio. El proyecto opera con un esquema **híbrido y redundante** que permite procesar videos tanto de forma 100% local (sin conexión a Internet) como en la nube (con modelos avanzados de Gemini), guardando directamente las guías de estudio estructuradas en formato Markdown en un disco extraíble (`D:\memoriam101`).
+Un sistema avanzado de ingesta, transcripción y resumen técnico de clases universitarias y reuniones de estudio (Platzi e Inglés). El proyecto opera con una arquitectura **100% Cloud** utilizando Gemini (Google GenAI) para procesar archivos de video sin consumir recursos locales.
 
 ---
 
 ## 🏗️ Arquitectura del Sistema
 
-El proyecto consta de dos motores principales de ingesta técnica de clases:
-
-### 1. Motor Local Inalámbrico (`watcher_asus.py`)
-Diseñado para operar de manera completamente autónoma y local (offline) aprovechando la aceleración por hardware de la GPU dedicada.
-- **Transcripción de Audio:** Utiliza `faster-whisper` (modelo `small`) acelerado por GPU (NVIDIA RTX 4050 con CUDA) para transcribir el audio en tiempo real con precisión. Incluye soporte de inicialización fonética para corregir acrónimos técnicos (ej. "Cujis" -> "QGIS").
-- **Análisis de Video (Frame Extraction):** Emplea OpenCV para extraer fotogramas clave de la clase de manera proporcional al tiempo total del video.
-- **Reconocimiento Visual (OCR):** Procesa los fotogramas mediante el modelo de visión local `moondream` a través de **Ollama** para detectar código en pantalla, menús de software y diagramas.
-- **Generador de Resúmenes:** Utiliza el modelo local `llama3.2:3b` vía Ollama para estructurar e integrar el audio y el contexto visual en una guía de estudio interactiva con glosarios y retos evolutivos prácticos.
-- **Monitoreo Inteligente:** Cuenta con detección de estabilidad de tamaño de archivos para evitar procesar videos mientras están siendo copiados o descargados en el disco extraíble.
-
-### 2. Motor Cloud de Alta Fidelidad (`ingest-clase.py`)
-Un pipeline complementario diseñado para cuando se dispone de conexión a Internet y se requiere un nivel superior de detalle analítico en el video.
-- **Procesamiento de Video Nativo:** Sube el archivo directamente a la **Google Files API** de forma segura.
-- **Inferencia Avanzada:** Emplea el modelo multimodal `gemini-flash-latest` (a través del SDK oficial de Google GenAI) para analizar simultáneamente audio, código, gestos y diapositivas.
-- **Carga de Credenciales Segura:** Cuenta con un cargador manual de archivos `.env` resistente a ejecuciones no interactivas en segundo plano dentro de WSL.
+### Motor Cloud Universal (`ingest_cloud.py` & `watcher_asus.py`)
+Diseñado para operar de manera autónoma ruteando videos hacia la nube según la carpeta de origen.
+- **Procesamiento Multimodal Nativo:** Utiliza la API nativa de Google GenAI (`gemini-2.5-flash`) para transcribir audio, realizar diarización (separar hablantes) y analizar video (pizarra, código, esquemas) en una sola pasada.
+- **Ruteo Inteligente:** `watcher_asus.py` monitorea los directorios. Si la carpeta indica que es una clase de inglés, usa un prompt evaluativo. De lo contrario, actúa como mentor técnico.
+- **Memoria Longitudinal:** Utiliza `student_profile.json` para mantener el contexto del progreso en diferentes clases.
+- **Purga Automática:** Limpia de forma estricta (DELETE) los videos en la Google Files API inmediatamente después de usarlos para maximizar privacidad y liberar cuota.
 
 ---
 
 ## 📁 Estructura del Repositorio
 
-- `watcher_asus.py`: Script de monitoreo automatizado local para carpetas en el disco extraíble.
-- `ingest-clase.py`: Script manual para ingesta de alta fidelidad asistida por Gemini Cloud.
-- `transcriptor_tiempo_real.py`: Herramienta de transcripción y extracción de audio para videos individuales con Google Speech API.
-- `resumen.py`: Utilidad de grabación y transcripción directa de audio del sistema (mezcla estéreo).
+- `watcher_asus.py`: Script de monitoreo automatizado local para carpetas en el disco extraíble. (Router)
+- `ingest_cloud.py`: Script de ingesta multimodal Gemini GenAI (Soporte para múltiples materias e Inglés).
 - `.gitignore`: Excluye de forma automática archivos de configuración privada (`.env`) y temporales.
 - `README.md`: Documentación técnica del proyecto.
 
@@ -38,9 +27,8 @@ Un pipeline complementario diseñado para cuando se dispone de conexión a Inter
 ## 🛠️ Requisitos e Instalación
 
 ### Requisitos del Sistema
-- **SO:** Windows con WSL 2 (Ubuntu 22.04+).
-- **GPU:** NVIDIA compatible con CUDA 11.8+ (RTX 4050 recomendado).
-- **Plataforma LLM:** Ollama (instalado en WSL) con los modelos `moondream` y `llama3.2:3b`.
+- **SO:** Windows con WSL 2 (Ubuntu 22.04+) o Linux nativo.
+- **Clave API:** Google Gemini API Key.
 
 ### Instalación de Dependencias en WSL
 1. Clona el repositorio dentro de tu directorio de usuario en WSL:
