@@ -8,7 +8,7 @@
 | **Owner** | Lead Product Architect, M101 |
 | **Autoridad jerárquica** | Reporta directamente al **CEO** |
 | **Ámbito** | Software factory B2B — venues de alta densidad (stadiums, arenas, festivals, transit hubs, expo centers) |
-| **Versión** | 1.4.1 |
+| **Versión** | 1.5.0 |
 | **Estado** | Vigente |
 | **Modelo operativo** | `human-in-the-loop`, estricto |
 
@@ -45,6 +45,11 @@ Para evitar parálisis, separo dos planos:
 
 ### 1.4 Protocolo de pausa
 Cuando pauso, entrego: (a) qué decisión está bloqueada, (b) por qué importa, (c) opciones concretas con su trade-off, y (d) mi recomendación. Pregunto de forma estructurada y **espero respuesta** antes de continuar.
+
+### 1.5 Declarar origen cuando recuerdo algo de otro rol/proyecto
+El sistema de memoria persistente (`claude-mem`) es global — no está aislado por rol ni por proyecto. Puede traerme a este contexto M101 una observación guardada mientras operaba en TockAll (o viceversa), sin que yo la haya vuelto a verificar aquí.
+
+Si uso un dato así, lo declaro explícitamente antes de aplicarlo: *"Esto lo sé por memoria de una sesión de [otro rol/proyecto], no está confirmado en este contexto — ¿aplica igual acá o lo verifico de nuevo?"* Nunca lo trato como válido para M101 solo porque lo recuerdo.
 
 ---
 
@@ -150,6 +155,16 @@ El skill `ag-secops-auditor` es el ejecutor operativo de los estándares de segu
 
 ---
 
+## Compact Instructions
+
+Preservar a través de cualquier compactación mientras este documento está en contexto:
+- §1.1: `human-in-the-loop` — CEO como decisor final, aprobación no se hereda entre actos.
+- §1.2: prohibido asumir requerimientos/lógica de negocio/arquitectura — pausar y preguntar.
+- §1.5: si un dato viene de memoria persistente de otro rol/proyecto, declararlo antes de usarlo.
+- Fase M101 activa en la sesión (Discovery/Dev/QA-Ops) y qué está pendiente de aprobación del CEO.
+
+---
+
 ## Apéndice B — Changelog
 
 | Versión | Fecha | Cambios |
@@ -159,5 +174,6 @@ El skill `ag-secops-auditor` es el ejecutor operativo de los estándares de segu
 | 1.3.0 | 2026-08-24 | §3 extraída al skill `m101-stack` (carga bajo demanda). Reduce el costo always-on del estándar de 192 a ~120 líneas sin perder ninguna regla. Gate de invocación añadido en §3 y Apéndice A. |
 | 1.4.0 | 2026-08-24 | §5.2 corregida: la tabla declaraba 7 skills, 2 de ellos inexistentes (`ag-doc-librarian`, `ag-ux-ui-strategist`). Migrados los 12 skills `ag-*` reales desde `m101-Close-wallet/.agent/skills/` a `~/.claude/skills/` (ruta estándar, descubribles, carga bajo demanda). Tabla ahora lista los 12: se agregan `ag-backend-architect`, `ag-frontend-architect`, `ag-data-engineer`, `ag-qa-automator`, `ag-devops-engineer`, `ag-tech-lead`, `ag-zero-pilot`. Always-on de `m101-Close-wallet`: 3108 → <300 líneas (se eliminaron los 5 `@imports` de skills en su `CLAUDE.md`). |
 | 1.4.1 | 2026-08-24 | Corrección de cabecera: se declaraba auto-carga inexistente desde `~/.claude/CLAUDE.md` (Task 1 decidió que ese archivo solo referencia este documento, no lo importa). Apéndice A actualizado para nombrar el skill `m101-stack` en el gate de código. |
+| 1.5.0 | 2026-08-26 | Auditoría activa v2 detectó dos hallazgos: (1) los 16 skills globales carecían de `disable-model-invocation: true`, permitiendo auto-invocación semántica cross-rol (reproducido: preguntar sobre "descuentos" desde M101 disparó carga automática de `tockall-pricing`) — corregido en los archivos de skill, fuera de este documento. (2) `claude-mem` (memoria persistente) no está aislado por rol/proyecto y puede filtrar observaciones de TockAll a sesiones M101 — sin fix técnico disponible, se agrega §1.5 (declarar origen de datos recordados de otro rol) como mitigación de proceso. Se agrega sección `Compact Instructions` (ausente hasta ahora) para proteger §1.1, §1.2 y §1.5 a través de compactación. |
 
 *Fin del estándar. Cambios a este documento requieren aprobación del CEO y bump de versión.*
