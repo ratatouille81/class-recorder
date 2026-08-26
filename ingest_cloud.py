@@ -22,9 +22,14 @@ def procesar_clase(video_path, subject_name):
     video_dir = os.path.dirname(video_path)
     
     # Archivos de salida
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-    markdown_path = os.path.join(video_dir, f"Resumen_{timestamp}.md")
-    deck_path = os.path.join(video_dir, f"Flashcards_{timestamp}.csv")
+    timestamp_file = datetime.now().strftime('%Y%m%d_%H%M')
+    timestamp_display = datetime.now().strftime('%Y-%m-%d %H:%M')
+    
+    # Un solo archivo Maestro por Materia
+    markdown_path = os.path.join(video_dir, f"Master_{subject_name}.md")
+    
+    # Flashcards individuales por clase (para importar limpio a Anki)
+    deck_path = os.path.join(video_dir, f"Flashcards_{timestamp_file}.csv")
     profile_path = os.path.join(video_dir, "student_profile.json")
 
     # Leer memoria longitudinal
@@ -85,7 +90,9 @@ def procesar_clase(video_path, subject_name):
         # 3. Guardado de Archivos
         data = json.loads(response.text)
         
-        with open(markdown_path, "w", encoding="utf-8") as f:
+        # Guardar en archivo Maestro acumulativo
+        with open(markdown_path, "a", encoding="utf-8") as f:
+            f.write(f"\n\n---\n## 📅 Clase procesada el: {timestamp_display}\n\n")
             f.write(data.get("markdown_resumen", ""))
         
         with open(deck_path, "w", encoding="utf-8") as f:
