@@ -7,8 +7,8 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# Cargar API Key
-load_dotenv()
+# Cargar API Key forzando lectura del archivo .env por sobre el sistema
+load_dotenv(override=True)
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     print("❌ Error: GEMINI_API_KEY no encontrada en el archivo .env")
@@ -57,13 +57,13 @@ def procesar_clase(video_path, subject_name):
             Analiza el video (que contiene una pizarra) y el audio (diarizando entre 'Tutor' y 'Estudiante').
             Devuelve tu respuesta EXACTAMENTE en este formato JSON, sin markdown extra alrededor:
             {
-              "markdown_resumen": "# Resumen de Clase... (incluye correcciones gramaticales, ratio de habla, temas de pizarra)",
+              "markdown_resumen": "# Resumen de Clase...",
               "csv_flashcards": "front,back\\nword,definition",
               "perfil_actualizado": "Resumen conciso del nivel actual del estudiante, errores recurrentes y temas a mejorar."
             }"""
         else:
-            system_instruction = f"""Eres el 'M101 Incremental Mentor', un experto técnico en {subject_name}.
-            Analiza la clase en video, extrayendo explicaciones teóricas, código en pantalla y la explicación del profesor.
+            system_instruction = "Eres el 'M101 Incremental Mentor', un experto técnico en " + subject_name + ".\n"
+            system_instruction += """Analiza la clase en video, extrayendo explicaciones teóricas, código en pantalla y la explicación del profesor.
             Devuelve tu respuesta EXACTAMENTE en este formato JSON, sin markdown extra alrededor:
             {
               "markdown_resumen": "# Resumen Técnico... (incluye Lo aprendido hoy, Conceptos Clave, Práctica M101, Glosario)",
@@ -71,10 +71,10 @@ def procesar_clase(video_path, subject_name):
               "perfil_actualizado": "Resumen conciso del progreso del estudiante en esta materia y conceptos que requieren refuerzo."
             }"""
         
-        prompt = f"Analiza esta clase. Historial del estudiante (Memoria Longitudinal): {student_profile}"
+        prompt = "Analiza esta clase. Historial del estudiante (Memoria Longitudinal): " + student_profile
 
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=[uploaded_file, prompt],
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -107,6 +107,7 @@ def procesar_clase(video_path, subject_name):
         
     except Exception as e:
         print(f"❌ Error en Cloud Engine: {e}")
+        sys.exit(1)
         
     finally:
         # 4. RUTINA DE PURGA ESTRICTA (Independientemente de si hubo error)
