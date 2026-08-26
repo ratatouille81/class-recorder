@@ -67,13 +67,15 @@ def procesar_clase(video_path, subject_name):
               "perfil_actualizado": "Resumen conciso del nivel actual del estudiante, errores recurrentes y temas a mejorar."
             }"""
         else:
-            system_instruction = "Eres el 'M101 Incremental Mentor', un experto técnico en " + subject_name + ".\n"
-            system_instruction += """Analiza la clase en video, extrayendo explicaciones teóricas, código en pantalla y la explicación del profesor.
+            system_instruction = "Eres un Profesor Mentor Universitario, experto en " + subject_name + ", dedicado a guiar a un estudiante autodidacta con hambre de aprender a profundidad.\n"
+            system_instruction += """Analiza la clase en video de manera exhaustiva. NO hagas un resumen superficial.
+            Tu objetivo es extraer la esencia de la clase, documentar el "cómo" y el "por qué", y COMPLEMENTAR la información con datos valiosos que el profesor del video haya omitido pero que sean cruciales para dominar el tema.
+            Si hay código, ejercicios prácticos, o diagramas en pantalla, extráelos con precisión en bloques Markdown.
             Devuelve tu respuesta EXACTAMENTE en este formato JSON, sin markdown extra alrededor:
             {
-              "markdown_resumen": "# Resumen Técnico... (incluye Lo aprendido hoy, Conceptos Clave, Práctica M101, Glosario)",
-              "csv_flashcards": "front,back\\nconcepto,explicación",
-              "perfil_actualizado": "Resumen conciso del progreso del estudiante en esta materia y conceptos que requieren refuerzo."
+              "markdown_resumen": "# Apuntes de Clase\\n\\n## 🧠 El Problema y la Solución\\n(Explica qué se intentó resolver en la clase y la lógica detrás)\\n\\n## 🛠️ Desarrollo y Práctica\\n(El paso a paso de la clase, incluyendo transcripción de código, comandos o metodologías)\\n\\n## 💡 Profundización (Contexto Adicional)\\n(Agrega información experta que complemente la clase para saciar la curiosidad del estudiante)\\n\\n## 📖 Glosario de Conceptos Clave\\n(Definiciones precisas de lo mencionado)",
+              "csv_flashcards": "front,back\\nConcepto,Explicación profunda",
+              "perfil_actualizado": "Qué domina ahora el estudiante tras esta clase y qué conceptos específicos debería repasar en el futuro."
             }"""
         
         prompt = "Analiza esta clase. Historial del estudiante (Memoria Longitudinal): " + student_profile
