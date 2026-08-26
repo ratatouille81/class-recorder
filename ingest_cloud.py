@@ -94,8 +94,16 @@ def procesar_clase(video_path, subject_name):
         with open(profile_path, "w", encoding="utf-8") as f:
             f.write(data.get("perfil_actualizado", ""))
             
-        print(f"✅ Artefactos de inglés generados correctamente en {video_dir}")
+        print(f"✅ Artefactos generados correctamente en {video_dir}")
         print(f"📊 Tokens usados: Input {response.usage_metadata.prompt_token_count} | Output {response.usage_metadata.candidates_token_count}")
+        
+        # Opción 2 del CEO: Trituradora local de videos
+        print(f"🗑️ Eliminando video original del disco local para liberar espacio...")
+        try:
+            os.remove(video_path)
+            print("🗑️ Video local eliminado con éxito.")
+        except Exception as e:
+            print(f"⚠️ No se pudo borrar el video local: {e}")
         
     except Exception as e:
         print(f"❌ Error en Cloud Engine: {e}")
