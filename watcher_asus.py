@@ -1,8 +1,10 @@
 import os
+import sys
 import time
 import cv2
 import base64
 import requests
+import subprocess
 from faster_whisper import WhisperModel
 from datetime import datetime
 
@@ -124,7 +126,7 @@ def procesar_video_v16(path):
         print(f"❌ Error v16: {e}")
 
 if __name__ == "__main__":
-    print(f"👀 M101 Watcher v16 (INCREMENTAL) activo...")
+    print(f"👀 M101 Watcher v17 (HYBRID ROUTER) activo...")
     while True:
         if os.path.exists(LOG_FILE):
             with open(LOG_FILE, "r") as f: procesados = f.read().splitlines()
@@ -135,5 +137,19 @@ if __name__ == "__main__":
                     full_path = os.path.join(root, file)
                     if full_path not in procesados:
                         if wait_for_file_stability(full_path):
-                            procesar_video_v16(full_path)
+                            # RUTEO INTELIGENTE
+                            folder_name = os.path.basename(root).lower()
+                            if "ingle" in folder_name or "english" in folder_name:
+                                print(f"🔀 [Router] Detectada clase de inglés, derivando a Motor Cloud...")
+                                try:
+                                    # Ejecutar script de ingesta de inglés en el mismo venv
+                                    python_exe = sys.executable if 'sys' in dir() else "python3" 
+                                    subprocess.run([python_exe, "ingest_ingles.py", full_path], check=True)
+                                    # Marcar como procesado independientemente de si el subprocess fue ok o si guardamos log dentro
+                                    with open(LOG_FILE, "a") as log: log.write(f"{full_path}\n")
+                                except subprocess.CalledProcessError as e:
+                                    print(f"❌ Fallo en el Motor Cloud: {e}")
+                            else:
+                                print(f"🔀 [Router] Detectada clase técnica, derivando a Motor Local...")
+                                procesar_video_v16(full_path)
         time.sleep(20)
