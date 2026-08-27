@@ -5,7 +5,8 @@ import subprocess
 from datetime import datetime
 
 # CONFIGURACIÓN M101 - CLOUD WATCHER (v18 100% NUBE)
-WATCH_DIR = "/mnt/d/memoriam101"
+# Migración a OneDrive institucional (Sincronización en la nube)
+WATCH_DIR = "/mnt/c/Users/ocard/OneDrive - Fundación Universitaria Konrad Lorenz/Recordings"
 LOG_FILE = os.path.join(WATCH_DIR, "procesados.log")
 
 print("🚀 Iniciando M101 Cloud Watcher v18...")
