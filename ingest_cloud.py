@@ -63,6 +63,7 @@ def procesar_clase(video_path, subject_name):
             Devuelve tu respuesta EXACTAMENTE en este formato JSON, sin markdown extra alrededor:
             {
               "markdown_resumen": "# Resumen de Clase...",
+              "memory_tags": "#Ingles #B2 #Grammar",
               "perfil_actualizado": "Resumen conciso del nivel actual del estudiante, errores recurrentes y temas a mejorar."
             }"""
         else:
@@ -73,6 +74,7 @@ def procesar_clase(video_path, subject_name):
             Devuelve tu respuesta EXACTAMENTE en este formato JSON, sin markdown extra alrededor:
             {
               "markdown_resumen": "# Apuntes de Clase\\n\\n## 🧠 El Problema y la Solución\\n(Explica qué se intentó resolver en la clase y la lógica detrás)\\n\\n## 🛠️ Desarrollo y Práctica\\n(El paso a paso de la clase, incluyendo transcripción de código, comandos o metodologías)\\n\\n## 💡 Profundización (Contexto Adicional)\\n(Agrega información experta que complemente la clase para saciar la curiosidad del estudiante)\\n\\n## 📖 Glosario de Conceptos Clave\\n(Definiciones precisas de lo mencionado)",
+              "memory_tags": "#Concepto1 #Concepto2 #Tecnologia (Genera 3 a 5 hashtags clave)",
               "perfil_actualizado": "Qué domina ahora el estudiante tras esta clase y qué conceptos específicos debería repasar en el futuro."
             }"""
         
@@ -94,6 +96,7 @@ def procesar_clase(video_path, subject_name):
         with open(markdown_path, "a", encoding="utf-8") as f:
             f.write(f"\n\n---\n## 📅 Clase procesada el: {timestamp_display}\n\n")
             f.write(data.get("markdown_resumen", ""))
+            f.write(f"\n\n**Memory Tags:**\n{data.get('memory_tags', '')}\n")
             
         with open(profile_path, "w", encoding="utf-8") as f:
             f.write(data.get("perfil_actualizado", ""))
